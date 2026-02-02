@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15
+    container_name: cms-db
+    restart: always
+    environment:
+      POSTGRES_USER: cmsuser
+      POSTGRES_PASSWORD: cmspassword
+      POSTGRES_DB: cms
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend/app
+    container_name: cms-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://cmsuser:cmspassword@db:5432/cms
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    image: nginx:alpine
+    container_name: cms-frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+
+volumes:
+  db_data:
