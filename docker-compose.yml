@@ -6,31 +6,43 @@ services:
     environment:
       POSTGRES_USER: cmsuser
       POSTGRES_PASSWORD: cmspassword
-      POSTGRES_DB: cms
+      POSTGRES_DB: cms_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cmsuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
-    build: ./backend/app
+    build: ./backend
     container_name: cms-backend
     restart: always
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgres://cmsuser:cmspassword@db:5432/cms
+      DATABASE_URL: postgresql://cmsuser:cmspassword@db:5432/cms_db
+      SECRET_KEY: your-super-secret-key-change-this-in-production-min-32-chars
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
     volumes:
       - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
     image: nginx:alpine
     container_name: cms-frontend
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
+    depends_on:
+      - backend
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
 
