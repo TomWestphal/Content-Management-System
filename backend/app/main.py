@@ -1,3 +1,4 @@
+from app.upload import router as upload_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
@@ -24,6 +25,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router)
 app.include_router(articles.router)
+app.include_router(upload_router)
 
 @app.get("/")
 def read_root():

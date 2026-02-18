@@ -1,3 +1,4 @@
+version: "3.9"
 services:
   db:
     image: postgres:15
@@ -22,17 +23,18 @@ services:
     container_name: cms-backend
     restart: always
     ports:
-      - "8000:8000"
+      - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://cmsuser:cmspassword@db:5432/cms_db
+      DATABASE_URL: postgresql://cmsuser:cmspassword@cms-db:5432/cms_db
       SECRET_KEY: your-super-secret-key-change-this-in-production-min-32-chars
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
     volumes:
       - ./backend:/app
+      - ./backend/documents:/app/documents
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
@@ -45,6 +47,19 @@ services:
       - backend
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: cms-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@example.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+    ports:
+      - "8081:80"   # pgAdmin interface
+    depends_on:
+      - db
 
 volumes:
   db_data:
